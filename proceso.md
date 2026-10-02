@@ -199,6 +199,19 @@ datos/: Esta sería la carpeta donde guardaríamos el archivo csv con el que ele
 sql/: Esta sería la carpeta donde vamos guardando las consultas y demás sentencias SQL que vayamos usando a medida que avancemos.
 
 diagrama/: Esta sería la carpeta donde más adelante guardaríamos el diagrama de la base de datos.
+También tuvimos en cuenta otra cosa importante para decidir cómo íbamos a trabajar.
+
+Durante la materia, varios compañeros trabajan con XAMPP, prendiendo los servicios de Apache y MySQL/MariaDB, y después se conectan a la base usando HeidiSQL.
+
+En el caso de Martín eso es un problema, porque usa lector de pantalla y HeidiSQL no le resulta accesible para trabajar de esa forma.
+
+Por eso con Valentín decidimos que cada uno iba a probar primero la forma de trabajar que conocía y que le resultaba más cómoda.
+
+Martín iba a probar trabajando con MariaDB dentro de Docker y usando la consola, mientras que Valentín podía probar también la forma que venía usando durante la materia.
+
+La idea fue que la forma que nos funcionara mejor para hacer el trabajo la íbamos a ir documentando en `proceso.md`.
+
+También decidimos que si en algún momento cambiábamos la forma de trabajar, por ejemplo si dejábamos de usar una herramienta y empezábamos a usar otra, también lo íbamos a dejar anotado explicando por qué hicimos ese cambio.
 
 Después comprobamos qué archivos nuevos había detectado Git:
 
@@ -317,6 +330,3 @@ To https://github.com/valentinaraguez/Trabajo-Final
 PS H:\\Mi unidad\\escuela comercio\\2026\\materias\\Bases de datos II\\oferta\_establecimientos\_gastronomicos\\repositorio\\Traba
 
 De esta forma ya teníamos el repositorio organizado y GitHub empezaba a guardar cómo iba avanzando nuestro trabajo.
-
-
-
