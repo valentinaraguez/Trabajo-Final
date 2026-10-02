@@ -189,7 +189,7 @@ docker run ... creó y arrancó un contenedor nuevo en Docker.
 -p 3306:3306 ... conectó el puerto 3306 de nuestra computadora con el puerto 3306 de MariaDB dentro del contenedor.
 -v mariadb_establecimientos_data:/var/lib/mysql ... creó un volumen para conservar la información de MariaDB.
 -d ... dejó el contenedor funcionando en segundo plano.
-mariadb ... especificó que use la última versión LTS de MariaDB.
+mariadb:lts ... especificó que use la última versión LTS de MariaDB.
 Después comprobamos la versión de MariaDB por si las dudas:
 docker exec mariadb_establecimientos_gastronomicos mariadb --version
 Resultado:
@@ -476,3 +476,10 @@ Como el trabajo lo hacemos entre los dos, nos dimos cuenta de que necesitábamos
 Cuando armamos el repositorio habíamos dejado creado el archivo compose.yaml justamente pensando en guardar ahí más adelante la configuración de Docker, pero hasta este momento todavía estaba vacío.
 Por eso antes de escribirlo decidimos investigar cómo funciona Docker Compose y cómo podíamos pasar a ese archivo la configuración que Martín ya había probado con docker run.
 También tuvimos en cuenta que no queríamos borrar ni perder la base que Martín ya tenía funcionando, así que primero íbamos a entender bien cómo hacerlo y después probarlo.
+17. 
+Comprobar que Valentín también pueda hacer la importación usando Heidi.
+Mientras Martín había hecho la importación usando MariaDB dentro de Docker y trabajando desde la consola, Valentín probó hacerlo con la forma que venía usando durante la materia.
+Cuando terminó le confirmó a Martín que también pudo hacer la importación de los datos del csv usando HeidiSQL.
+Eso sirvió para comprobar que la forma de trabajo que habíamos pensado al principio podía funcionar: no fue necesario que los dos usáramos exactamente las mismas herramientas para trabajar con la base.
+Martín podía seguir usando Docker y la consola porque le resultaban accesibles con el lector de pantalla, mientras que Valentín podía trabajar con HeidiSQL.
+Lo importante era que los dos trabajáramos sobre la misma estructura de la base y que las consultas y cambios importantes quedaran guardados en los archivos SQL y en el repositorio.
