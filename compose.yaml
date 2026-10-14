@@ -1,0 +1,14 @@
+services:
+  mariadb:
+    image: mariadb:lts
+    container_name: mariadb_establecimientos_gastronomicos
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - "mariadb_establecimientos_data:/var/lib/mysql"
+
+volumes:
+  mariadb_establecimientos_data:
+    external: true

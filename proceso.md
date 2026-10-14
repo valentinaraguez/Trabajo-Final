@@ -388,7 +388,7 @@ mariadb-import ... fue la herramienta que usamos para importar el archivo.
 --password=rootpass ... especificó la contraseña.
 --fields-terminated-by=";" ... especificó que las columnas estaban separadas por punto y coma.
 --ignore-lines=1 ... ignoró la primera línea porque ahí estaban los nombres de las columnas.
---local ... hizo que la herramienta leyera el archivo indicado.
+--local ... hizo que la herramienta lea el archivo indicado.
 oferta_gastronomica ... fue la base donde cargamos los datos.
 /temporal.csv ... fue el archivo que quisimos importar.
 14. 
@@ -472,7 +472,7 @@ sql/02_comprobaciones.sql
 Ahí guardamos las primeras consultas que usamos para comprobar que los datos se habían importado correctamente.
 De esa forma el repositorio no solamente tenía la explicación de lo que hicimos en proceso.md, sino también el CSV con el que realmente trabajamos y las sentencias SQL que fuimos usando.
 Después apareció otro problema.
-Como el trabajo lo hacemos entre los dos, nos dimos cuenta de que necesitábamos una forma de guardar también la configuración de MariaDB que estábamos usando para que el otro pudiera crear un entorno parecido en su computadora.
+Como el trabajo lo hacemos entre los dos, nos dimos cuenta de que necesitábamos una forma de guardar también la configuración de MariaDB que estábamos usando para que el otro pueda crear un entorno parecido en su computadora.
 Cuando armamos el repositorio habíamos dejado creado el archivo compose.yaml justamente pensando en guardar ahí más adelante la configuración de Docker, pero hasta este momento todavía estaba vacío.
 Por eso antes de escribirlo decidimos investigar cómo funciona Docker Compose y cómo podíamos pasar a ese archivo la configuración que Martín ya había probado con docker run.
 También tuvimos en cuenta que no queríamos borrar ni perder la base que Martín ya tenía funcionando, así que primero íbamos a entender bien cómo hacerlo y después probarlo.
@@ -483,3 +483,695 @@ Cuando terminó le confirmó a Martín que también pudo hacer la importación d
 Eso sirvió para comprobar que la forma de trabajo que habíamos pensado al principio podía funcionar: no fue necesario que los dos usáramos exactamente las mismas herramientas para trabajar con la base.
 Martín podía seguir usando Docker y la consola porque le resultaban accesibles con el lector de pantalla, mientras que Valentín podía trabajar con HeidiSQL.
 Lo importante era que los dos trabajáramos sobre la misma estructura de la base y que las consultas y cambios importantes quedaran guardados en los archivos SQL y en el repositorio.
+18. Investigar cómo funciona Docker Compose y cómo pasar nuestra configuración de MariaDB.
+Como habíamos dejado escrito antes, hasta este momento Martín había creado MariaDB usando directamente docker run.
+El comando que ya nos había funcionado era:
+docker run --name mariadb_establecimientos_gastronomicos -e MARIADB_ROOT_PASSWORD=rootpass -p 3306:3306 -v mariadb_establecimientos_data:/var/lib/mysql -d mariadb:lts
+El problema era que toda esa configuración estaba dentro del comando que Martín había ejecutado en su computadora.
+Como queríamos que Valentín pueda tener una configuración parecida y que además quedara guardada en el repositorio, empezamos a buscar cómo funciona Docker Compose.
+Encontramos un artículo de Mauro Bernal donde él explica que Docker Compose permite guardar la configuración de los contenedores dentro de un archivo compose.yaml, en vez de tener que recordar y volver a escribir todos los parámetros de docker run.
+También él explica que dentro de services se pueden indicar cosas como la imagen, los puertos, las variables de entorno y los volúmenes.
+Fuente: Mauro Bernal, “Docker Compose de cero a producción — Parte 1: Qué es y cómo funciona”.
+Link:
+https://maurobernal.com.ar/blog/docker-compose-de-cero-a-produccion-parte-1/
+Ahí también vimos que actualmente se usa:
+docker compose
+sin el guion que aparecía antes como:
+docker-compose
+También vimos que en la versión actual no hacía falta poner al principio del archivo algo como:
+version: "3.8"
+Con eso empezamos a comparar nuestro comando con las partes de un archivo Compose.
+En nuestro comando teníamos:
+mariadb:lts
+que era la imagen.
+Teníamos:
+3306:3306
+que era el puerto.
+Teníamos:
+MARIADB_ROOT_PASSWORD
+como variable de entorno.
+Y teníamos:
+mariadb_establecimientos_data:/var/lib/mysql
+que era el volumen donde MariaDB estaba guardando los datos.
+Después buscamos otra explicación para ver un ejemplo más sencillo de cómo se podía usar Compose para que otra persona pueda levantar un entorno parecido.
+Encontramos un artículo de Lucas Juárez donde él explica que una de las ventajas de Docker Compose es poder guardar la configuración en un archivo y después repetirla en otra computadora usando ese mismo archivo.
+Fuente: Lucas Juárez, “Docker Compose para principiantes: tu primer proyecto”.
+Link:
+https://lucasjuarez.com/blog/docker-compose-principiantes/
+En su explicación él recomienda no escribir las contraseñas directamente dentro de compose.yaml, sino guardarlas en un archivo .env y hacer que Compose lea el valor desde ahí.
+También él explica que ese archivo .env no se debería subir al repositorio.
+Eso nos pareció mejor que dejar:
+MARIADB_ROOT_PASSWORD=rootpass
+escrito directamente dentro de compose.yaml.
+Por eso pensamos que el archivo podía usar una variable así:
+MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+y que cada uno tuviera el valor correspondiente en su archivo .env.
+Pero todavía nos quedaba una duda importante.
+Martín ya tenía creado el volumen:
+mariadb_establecimientos_data
+y ahí estaba la base que habíamos importado.
+No queríamos que al empezar a usar Compose se creara otro volumen diferente y pareciera que habíamos perdido la base.
+Por eso buscamos específicamente cómo se hacía cuando el volumen ya existía antes de crear el archivo Compose.
+Encontramos un artículo de Guido Collino donde él explica la diferencia entre los volúmenes y los bind mounts de Docker.
+También él explica que un volumen puede haber sido creado anteriormente fuera de Docker Compose y que, si queremos usar ese mismo volumen desde Compose, se puede declarar como externo usando:
+external: true
+Fuente: Guido Collino, “Docker: la verdadera diferencia entre volumes y bind mounts”.
+Link:
+https://medium.com/unagi/docker-la-verdadera-diferencia-entre-volumes-y-bind-mounts-aa7ed61d06ab
+Esto era justamente lo que necesitábamos porque nuestro volumen no había sido creado por Compose.
+Lo habíamos creado cuando ejecutamos docker run.
+Por eso entendimos que no necesitábamos crear otro volumen para MariaDB.
+Podíamos decirle a Compose que utilizara el volumen que ya existía.
+Con todo lo que fuimos encontrando vimos que nuestra configuración podía quedar parecida a esta:
+services:
+  mariadb:
+    image: mariadb:lts
+    container_name: mariadb_establecimientos_gastronomicos
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_establecimientos_data:/var/lib/mysql
+
+volumes:
+  mariadb_establecimientos_data:
+    external: true
+Pero todavía no ejecutamos esta configuración.
+Antes quisimos comprobar bien que el volumen que ya teníamos seguía existiendo y después hacer el cambio sin borrar los datos de la base.
+No queríamos cambiar directamente algo que ya nos estaba funcionando sin antes comprobar bien qué iba a pasar.
+Primero investigamos cómo pasar a Compose la configuración que ya teníamos y cómo usar el mismo volumen.
+Después íbamos a comprobar el volumen que ya estaba creado y recién ahí probar compose.yaml.
+19. Comprobar el volumen que ya teníamos creado.
+Antes de probar el archivo compose.yaml quisimos comprobar que el volumen donde estaba nuestra base seguía existiendo y que el contenedor que ya teníamos estaba usando ese volumen.
+Como no queríamos hacer algo que pueda borrar los datos, primero buscamos cómo se podían consultar los volúmenes que ya estaban creados en Docker.
+Encontramos una explicación de José Domingo Muñoz donde él muestra algunos comandos para trabajar con los volúmenes.
+Ahí él explica que:
+docker volume ls
+sirve para ver los volúmenes que tenemos creados.
+También muestra:
+docker volume inspect nombre_del_volumen
+para ver la información de un volumen en particular.
+Fuente: José Domingo Muñoz, “Asociando almacenamiento a los contenedores: volúmenes Docker”.
+Link:
+https://plataforma.josedomingo.org/pledin/cursos/docker2024/contenido/modulo4/03_volumen/
+En la misma explicación él también muestra que se puede usar docker inspect para comprobar los puntos de montaje de un contenedor.
+Eso nos servía porque nosotros no solamente queríamos saber si el volumen existía.
+También queríamos comprobar que nuestro contenedor:
+mariadb_establecimientos_gastronomicos
+seguía teniendo conectado:
+mariadb_establecimientos_data
+en:
+/var/lib/mysql
+Primero decidimos listar los volúmenes:
+docker volume ls
+ahí en el resultado encontramos:
+local     mariadb_establecimientos_data                                                                                 
+Después decidimos ver la información de ese volumen:
+docker volume inspect mariadb_establecimientos_data
+Con eso podíamos comprobar cosas como su nombre, el driver que estaba usando y el lugar donde Docker guardaba ese volumen.
+El resultado fue:
+[                                                                                                                       
+    {                                                                                                                   
+        "CreatedAt": "2026-10-02T14:28:22Z",                                                                            
+        "Driver": "local",                                                                                              
+        "Labels": null,                                                                                                 
+        "Mountpoint": "/var/lib/docker/volumes/mariadb_establecimientos_data/_data",                                    
+        "Name": "mariadb_establecimientos_data",                                                                        
+        "Options": null,                                                                                                
+        "Scope": "local"                                                                                                
+    }                                                                                                                   
+]                                                                                                                       
+PS C:\Users\ortiz>
+Después quisimos comprobar también qué volumen tenía conectado nuestro contenedor de MariaDB.
+Para eso usamos:
+docker inspect mariadb_establecimientos_gastronomicos --format "{{range .Mounts}}{{.Type}} {{.Name}} -> {{.Destination}}{{end}}"
+Lo que nos interesaba comprobar era que aparezca el volumen:
+mariadb_establecimientos_data
+relacionado con:
+/var/lib/MySQL
+El resultado fue:
+volume mariadb_establecimientos_data -> /var/lib/mysql                                                                  
+PS C:\Users\ortiz>
+Antes de seguir no usamos ningún comando para borrar volúmenes ni contenedores.
+Primero quisimos ver lo que ya teníamos y comprobar que el volumen que contenía nuestra base seguía ahí.
+Después de comprobar eso recién íbamos a pensar cómo pasar del contenedor que habíamos creado con docker run al que íbamos a manejar con Docker Compose.
+21. 
+Preparar el cambio del contenedor a Docker Compose.
+Después de comprobar que el volumen seguía existiendo y que nuestro contenedor de MariaDB lo estaba usando, quisimos ver cómo podíamos pasar a Docker Compose sin perder la base que ya teníamos.
+Buscamos cómo se podía detener y borrar solamente un contenedor sin borrar el volumen donde estaban guardados los datos.
+Encontramos una explicación de Eduardo Zepeda donde él muestra que los volúmenes sirven justamente para guardar información fuera del contenedor y que esa información puede seguir estando aunque el contenedor se borre.
+Fuente: Eduardo Zepeda, “Comandos de Docker más útiles para manejar contenedores”.
+Link:
+https://coffeebytes.dev/es/docker/tutorial-basicos-de-comandos-de-docker/
+En su explicación él primero crea un volumen, lo usa dentro de un contenedor y después hace:
+docker stop nombre_del_contenedor
+docker rm nombre_del_contenedor
+Después comprueba que el contenido del volumen sigue existiendo.
+Eso nos sirvió porque era parecido a lo que nosotros necesitábamos hacer.
+Nuestro contenedor se llamaba:
+mariadb_establecimientos_gastronomicos
+y el volumen que ya habíamos comprobado era:
+mariadb_establecimientos_data
+Por eso entendimos que podíamos detener y borrar solamente el contenedor viejo para después volver a crear uno con Docker Compose usando el mismo volumen.
+No queríamos usar ningún comando para borrar el volumen.
+Primero decidimos detener el contenedor:
+docker stop mariadb_establecimientos_gastronomicos
+Después íbamos a comprobar que estuviera detenido:
+docker ps -a
+resultado:
+CONTAINER ID   IMAGE                                                   COMMAND                   CREATED        STATUS                          PORTS                                           NAMES                                           
+06ccd8673fbf   mariadb:lts                                             "docker-entrypoint.s…"    11 days ago    Exited (137) 45 hours ago                                                       mariadb_establecimientos_gastronomicos          
+afbf03d9d93b   mariadb:latest                                          "docker-entrypoint.s…"    6 weeks ago    Exited (137) 6 weeks ago                                                        mariadb                                         
+341e0806f2e2   public.ecr.aws/supabase/postgres:17.6.1.158             "sh -c '\ncat <<'EOF'…"   2 months ago   Up 18 minutes (healthy)         0.0.0.0:54322->5432/tcp, [::]:54322->5432/tcp   supabase_db_sistema-biblioteca-rdd              
+75a918e14ffb   public.ecr.aws/supabase/studio:2026.08.10-sha-5b68af1   "docker-entrypoint.s…"    2 months ago   Up 18 minutes (healthy)         0.0.0.0:54323->3000/tcp, [::]:54323->3000/tcp   supabase_studio_sistema-biblioteca-rdd          
+34979692ae87   public.ecr.aws/supabase/postgres-meta:v0.97.0           "docker-entrypoint.s…"    2 months ago   Up 18 minutes (healthy)         8080/tcp                                        supabase_pg_meta_sistema-biblioteca-rdd         
+cd16b0a5338a   public.ecr.aws/supabase/edge-runtime:v1.74.3            "sh -c 'edge-runtime…"    2 months ago   Exited (255) 8 weeks ago                                                        supabase_edge_runtime_sistema-biblioteca-rdd    
+0a076e34e569   public.ecr.aws/supabase/storage-api:v1.69.0             "docker-entrypoint.s…"    2 months ago   Up 18 minutes (healthy)         5000/tcp                                        supabase_storage_sistema-biblioteca-rdd         
+1f6b4daa19ee   public.ecr.aws/supabase/postgrest:v16.1                 "/bin/postgrest"          2 months ago   Up 18 minutes                   3000/tcp                                        supabase_rest_sistema-biblioteca-rdd            
+9a4ec8ab1478   public.ecr.aws/supabase/realtime:v2.124.4               "/usr/bin/tini -s -g…"    2 months ago   Up 18 minutes (healthy)         4000/tcp                                        supabase_realtime_sistema-biblioteca-rdd        
+3e9c428a456f   public.ecr.aws/supabase/mailpit:v1.30.2                 "/mailpit"                2 months ago   Up 18 minutes (healthy)         0.0.0.0:54324->8025/tcp, [::]:54324->8025/tcp   supabase_inbucket_sistema-biblioteca-rdd        
+db74c25e74b4   public.ecr.aws/supabase/gotrue:v2.195.0                 "auth"                    2 months ago   Up 18 minutes (healthy)         9999/tcp                                        supabase_auth_sistema-biblioteca-rdd            
+f60c6ffb710d   public.ecr.aws/supabase/kong:2.8.1                      "sh -c 'cat <<'EOF' …"    2 months ago   Up 18 minutes (healthy)         0.0.0.0:54321->8000/tcp, [::]:54321->8000/tcp   supabase_kong_sistema-biblioteca-rdd            
+177977de4f13   public.ecr.aws/supabase/vector:0.53.0-alpine            "sh -c 'cat <<'EOF' …"    2 months ago   Restarting (0) 44 seconds ago                                                   supabase_vector_sistema-biblioteca-rdd          
+5aab8e7ff625   public.ecr.aws/supabase/logflare:1.50.2                 "sh -c 'cat <<'EOF' …"    2 months ago   Up 18 minutes (healthy)         0.0.0.0:54327->4000/tcp, [::]:54327->4000/tcp   supabase_analytics_sistema-biblioteca-rdd       
+af0d20a24b36   mariadb:latest                                          "docker-entrypoint.s…"    2 months ago   Exited (255) 2 months ago       0.0.0.0:3306->3306/tcp                          mariadb-cotel                                   
+25e928766b3f   mariadb:latest                                          "docker-entrypoint.s…"    3 months ago   Exited (255) 2 months ago       0.0.0.0:3307->3306/tcp                          mi-mariadb                                      
+PS C:\Users\ortiz>                                                                                                      
+
+Y recién después podíamos borrar solamente ese contenedor:
+docker rm mariadb_establecimientos_gastronomicos
+Antes de hacerlo tuvimos en cuenta que no queríamos usar comandos como:
+docker volume rm
+ni:
+docker volume prune
+porque esos comandos sí trabajan directamente con los volúmenes.
+La idea era borrar solamente el contenedor que habíamos creado con docker run, pero conservar:
+mariadb_establecimientos_data
+para después volver a usarlo desde compose.yaml.
+Después de borrar el contenedor íbamos a volver a comprobar que el volumen todavía aparezca con:
+docker volume ls
+Si seguía apareciendo, recién ahí íbamos a crear el nuevo contenedor usando Docker Compose.
+resultado:
+DRIVER    VOLUME NAME                                                                                                   
+local     mariadb_establecimientos_data                                                                                 
+22. 
+Crear los archivos .env y compose.yaml.
+Después de comprobar que el volumen mariadb_establecimientos_data seguía existiendo, recién ahí seguimos con la preparación de Docker Compose.
+Antes ya habíamos investigado que Compose permite guardar la configuración de los contenedores dentro de un archivo compose.yaml, para no tener que recordar y volver a escribir todos los parámetros de docker run.
+También habíamos visto que dentro de services se podían indicar cosas como la imagen, los puertos, las variables de entorno y los volúmenes.
+Fuente: Mauro Bernal, “Docker Compose de cero a producción — Parte 1: Qué es y cómo funciona”.
+Link:
+https://maurobernal.com.ar/blog/docker-compose-de-cero-a-produccion-parte-1/
+También habíamos encontrado una explicación de Lucas Juárez donde decía que una de las ventajas que podemos aprovechar si usamos Docker Compose era poder guardar la configuración en un archivo y repetirla después en otra computadora usando ese mismo archivo.
+En esa misma explicación vimos que no era bueno escribir la contraseña directamente dentro de compose.yaml, sino ponerla en un archivo .env y hacer que Compose la lea desde ahí.
+Fuente: Lucas Juárez, “Docker Compose para principiantes: tu primer proyecto”.
+Link:
+https://lucasjuarez.com/blog/docker-compose-principiantes/
+Por eso primero nos ubicamos en la carpeta raíz del proyecto, es decir, en la misma carpeta donde veníamos guardando los archivos del trabajo y donde también iba a quedar el archivo compose.yaml.
+Desde PowerShell entramos a la carpeta del proyecto y comprobamos dónde estábamos ubicados con:
+pwd
+resultado:
+Path                                                                                                                    
+----                                                                                                                    
+H:\Mi unidad\escuela comercio\2026\materias\Bases de datos II\oferta_establecimientos_gastronomicos\repositorio\Trab... 
+PS H:\Mi unidad\escuela comercio\2026\materias\Bases de datos II\oferta_establecimientos_gastronomicos\repositorio\Trabajo-Final>                                                                                                               
+
+Después listamos los archivos para confirmar que estábamos en la carpeta correcta:
+dir
+resultado:
+dir
+    Directorio: H:\Mi unidad\escuela comercio\2026\materias\Bases de datos                                              
+    II\oferta_establecimientos_gastronomicos\repositorio\Trabajo-Final                                                  
+Mode                 LastWriteTime         Length Name                                                                  
+----                 -------------         ------ ----                                                                  
+d-----         2/10/2026     15:30                datos                                                                 
+d-----         2/10/2026     16:27                sql                                                                   
+d-----         2/10/2026     14:33                diagrama                                                              
+------         2/10/2026     14:26             89 README.md                                                             
+------         2/10/2026     16:38          30471 proceso.md                                                            
+------         2/10/2026     14:31              0 compose.yaml                                                          
+PS H:\Mi unidad\escuela comercio\2026\materias\Bases de datos II\oferta_establecimientos_gastronomicos\repositorio\Trabajo-Final>                                                                                                               
+Ahí creamos primero el archivo .env.con:
+notepad .env
+Como el archivo no existía todavía, Notepad nos preguntó si queríamos crearlo.
+Apretamos si y escribimos dentro lo necesario para que docker pueda usar mariadb ósea la contarseña que le habíamos puesto:
+MARIADB_ROOT_PASSWORD=rootpass
+Después guardamos el archivo.
+Con eso ya creamos una variable llamada MARIADB_ROOT_PASSWORD y le dimos como valor la contraseña que veníamos usando.
+No queríamos escribir directamente:
+rootpass
+dentro de compose.yaml.
+Por eso después, en el archivo Compose, la íbamos a llamar así:
+${MARIADB_ROOT_PASSWORD}
+Eso para que docker entienda la referencia y todo funcione bien.
+También tuvimos en cuenta que el archivo .env no debería subirse al repositorio, porque ahí teníamos la contraseña y por más que esto sea un trabajo de clase nos servía para cuando trabajemos con proyectos mas grandes.
+Después creamos el archivo compose.yaml.
+Para eso, en la misma carpeta del proyecto usamos el mismo comando:
+notepad compose.yaml
+Como el archivo no existía todavía, Notepad también nos preguntó si queríamos crearlo.
+Apretamos en si y empezamos a escribir la configuración.
+No fue difícil porque en el archivo pasamos la configuración que antes estaba escrita dentro del comando docker run.
+Nuestro comando anterior tenía:
+mariadb:lts
+que era la imagen.
+También tenía:
+3306:3306
+que era el puerto.
+Tenía la variable:
+MARIADB_ROOT_PASSWORD
+y también tenía el volumen:
+mariadb_establecimientos_data:/var/lib/mysql
+Como ese volumen ya existía y no había sido creado por Compose, usamos:
+external: true
+Esto lo hicimos porque antes habíamos investigado que, cuando un volumen fue creado antes de usar Compose, se podía declarar como externo para que Compose use ese mismo volumen y no creara otro nuevo.
+Fuente: Guido Collino, “Docker: la verdadera diferencia entre volumes y bind mounts”.
+Link:
+https://medium.com/unagi/docker-la-verdadera-diferencia-entre-volumes-y-bind-mounts-aa7ed61d06ab
+Con todo eso, el archivo compose.yaml quedó así:
+services:
+  mariadb:
+    image: mariadb:lts
+    container_name: mariadb_establecimientos_gastronomicos
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - "mariadb_establecimientos_data:/var/lib/mysql"
+
+volumes:
+  mariadb_establecimientos_data:
+    external: true
+Después guardamos el archivo.
+En este archivo:
+services indicaba los servicios o contenedores que Compose iba a manejar.
+mariadb era el nombre del servicio que estábamos usando.
+image: mariadb:lts indicaba la imagen que queríamos usar.
+container_name: mariadb_establecimientos_gastronomicos indicaba el nombre que queríamos que tuviera el contenedor.
+environment indicaba las variables de entorno.
+MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD} tomaba la contraseña desde el archivo .env.
+ports conectaba el puerto 3306 de nuestra computadora con el puerto 3306 del contenedor.
+volumes conectaba el volumen mariadb_establecimientos_data con /var/lib/mysql, que era donde MariaDB guardaba sus datos.
+Y al final:
+volumes:
+  mariadb_establecimientos_data:
+    external: true
+indicaba que ese volumen ya existía y que Docker Compose no tenía que crear uno nuevo.
+23.
+Comprobar que compose.yaml estuviera bien escrito.
+
+Después de crear .env y compose.yaml no quisimos levantar directamente el contenedor.
+
+Primero quisimos comprobar que Docker Compose pueda leer bien lo que habíamos escrito, porque habíamos visto que YAML depende de la sangría y además estábamos usando una variable que venía del archivo .env.
+
+Buscamos si Docker Compose tenía alguna forma de revisar la configuración antes de levantar los contenedores.
+
+Buscando, encontramos la segunda parte de la explicación de Mauro Bernal sobre Docker Compose.
+
+Ahí él explicaba:
+
+docker compose config
+
+y contaba que ese comando permite ver la configuración que Compose entendió después de leer el archivo y reemplazar las variables de entorno.
+
+Fuente: Mauro Bernal, “Docker Compose de cero a producción — Parte 2: CLI, dependencias robustas y perfiles”.
+
+Link: [Docker Compose de cero a producción — Parte 2](https://maurobernal.com.ar/blog/docker-compose-de-cero-a-produccion-parte-2/?utm_source=chatgpt.com)
+
+Por eso, desde la carpeta del proyecto donde ya estaban .env y compose.yaml, ejecutamos:
+
+docker compose config
+
+Resultado:
+name: trabajo-final                                                                                                     
+services:                                                                                                               
+  mariadb:                                                                                                              
+    container_name: mariadb_establecimientos_gastronomicos                                                              
+    environment:                                                                                                        
+      MARIADB_ROOT_PASSWORD: rootpass                                                                                   
+    image: mariadb:lts                                                                                                  
+    networks:                                                                                                           
+      default: null                                                                                                     
+    ports:                                                                                                              
+      - mode: ingress                                                                                                   
+        target: 3306                                                                                                    
+        published: "3306"                                                                                               
+        protocol: tcp                                                                                                   
+    volumes:                                                                                                            
+      - type: volume                                                                                                    
+        source: mariadb_establecimientos_data                                                                           
+        target: /var/lib/mysql                                                                                          
+        volume: {}                                                                                                      
+networks:                                                                                                               
+  default:                                                                                                              
+    name: trabajo-final_default                                                                                         
+volumes:                                                                                                                
+  mariadb_establecimientos_data:                                                                                        
+    name: mariadb_establecimientos_data                                                                                 
+    external: true                                                                                                      
+PS H:\Mi unidad\escuela comercio\2026\materias\Bases de datos II\oferta_establecimientos_gastronomicos\repositorio\Trabajo-Final>
+Explicación para recordar:
+docker compose indicaba que queríamos trabajar con Docker Compose.
+
+config hacía que Compose lea nuestra configuración y mostrara cómo la había interpretado, pero sin levantar todavía el contenedor.
+
+En el resultado quisimos comprobar que aparezca:
+
+mariadb:lts
+
+como imagen.
+
+También:
+
+3306
+
+como puerto.
+
+La variable:
+
+MARIADB_ROOT_PASSWORD
+
+y el volumen:
+
+mariadb_establecimientos_data
+
+También quisimos comprobar que no aparezca ningún error relacionado con la escritura de compose.yaml.
+Todo fue bien así que seguimos.
+
+24.
+
+Evitar que .env se suva al repositorio.
+
+Cuando creamos .env habíamos puesto ahí:
+
+MARIADB_ROOT_PASSWORD=rootpass
+
+Como era un archivo que podía contener contraseñas, no quisimos subirlo a GitHub.
+
+Buscamos cómo se hacía normalmente en un proyecto.
+
+Encontramos una explicación de Miguel A. C. M. sobre la gestión de secretos.
+Ya habíamos trabajado en GitHub ante pero como queríamos aprender mas de el tema nos pusimos a ver que podíaos aprender.
+En lo que escribió Él explica que los archivos .env con valores reales no deberían quedar guardados dentro del repositorio y recomienda agregarlos a .gitignore.
+
+También explica la idea de tener un archivo de ejemplo que muestre qué variables necesita el proyecto, pero sin guardar los valores reales.
+
+Fuente: Miguel A. C. M., “Gestión de secretos: cómo no filtrar API keys, .env ni tokens”.
+
+Link: [Gestión de secretos: cómo no filtrar API keys, .env ni tokens](https://miguelacm.es/blog/gestion-de-secretos?utm_source=chatgpt.com)
+
+Por eso desde la carpeta principal del proyecto decidimos crear el archivo gitignore
+
+Para hacerlo usamos:
+
+notepad .gitignore
+
+Como el archivo todavía no existía, Notepad nos preguntó si queríamos crearlo.
+
+Apretamos si y adentro escribimos:
+
+.env
+
+Después guardamos el archivo.
+
+Explicación para recordar:
+.gitignore es un archivo donde se pueden indicar archivos o carpetas que no queremos que Git agregue normalmente al repositorio.
+
+En nuestro caso pusimos:
+
+.env
+
+porque queríamos que cada uno tuviera su propio archivo con su contraseña, pero que ese archivo no quedara publicado en GitHub.
+
+Después creamos:
+
+.env.example
+
+Usamos:
+
+notepad .env.example
+
+Y adentro escribimos:
+
+MARIADB_ROOT_PASSWORD=
+
+Después guardamos.
+
+Este archivo sí se podía subir al repositorio porque no tenía ninguna contraseña.
+
+Solamente lo pusimos para mostrar y dejar claro que para usar el proyecto había que tener una variable que sea:
+
+MARIADB_ROOT_PASSWORD
+
+Después comprobamos:
+
+git status
+
+Resultado:
+On branch main                                                                                                          
+Your branch is up to date with 'origin/main'.                                                                           
+Changes not staged for commit:                                                                                          
+  (use "git add <file>..." to update what will be committed)                                                            
+  (use "git restore <file>..." to discard changes in working directory)                                                 
+        modified:   compose.yaml                                                                                        
+Untracked files:                                                                                                        
+  (use "git add <file>..." to include in what will be committed)                                                        
+        .env.example                                                                                                    
+        .gitignore                                                                                                      
+no changes added to commit (use "git add" and/or "git commit -a")                                                       
+PS H:\Mi unidad\escuela comercio\2026\materias\Bases de datos II\oferta_establecimientos_gastronomicos\repositorio\Trabajo-Final>
+Lo que quisimos comprobar especialmente fue que:
+
+.env
+
+no aparezca entre los archivos que Git quería agregar.
+Como fue así seguimos.
+25.
+
+Levantar MariaDB usando Docker Compose.
+
+Después de comprobar la configuración y preparar .gitignore, recién ahí quisimos probar Docker Compose.
+
+Para eso usamos la explicación de Lucas Juárez donde mostraba:
+
+docker compose up -d
+
+para levantar los servicios definidos en el archivo Compose.
+
+También mostraba:
+
+docker compose ps
+
+para comprobar cuáles estaban funcionando.
+
+Él explicaba además que -d deja los contenedores ejecutándose en segundo plano.
+
+Fuente: Lucas Juárez, “Docker Compose para principiantes: tu primer proyecto”.
+
+Link: [Docker Compose para principiantes](https://lucasjuarez.com/blog/docker-compose-principiantes/?utm_source=chatgpt.com)
+
+Por lo tanto desde la carpeta del proyecto ejecutamos:
+
+docker compose up -d
+
+Resultado:
+[+] up 0/1                                                                                                              
+ - Network trabajo-final_default Creating                                                                           0.1s
+1/2
+✔
+ed
+0.1s
+ - Container mariadb_establecimientos_gastronomicos Creating                                      
+0
+2
+✔
+ed 
+4
+1
+-
+Starting
+5
+2
+✔
+ed 
+1.0
+PS H:\Mi unidad\escuela comercio\2026\materias\Bases de datos II\oferta_establecimientos_gastronomicos\repositorio\Trabajo-Final>
+Explicación para después.
+docker compose indicó que queríamos trabajar con la configuración de Docker Compose.
+
+up indicó que queríamos crear o arrancar los servicios definidos en compose.yaml.
+
+-d hizo que el contenedor quedara funcionando en segundo plano.
+
+Después comprobamos:
+
+docker compose ps
+
+Resultado:
+NAME                                     IMAGE         COMMAND                  SERVICE   CREATED          STATUS          PORTS                                                                                                                
+mariadb_establecimientos_gastronomicos   mariadb:lts   "docker-entrypoint.s…"   mariadb   54 seconds ago   Up 52 seconds   0.0.0.0:3306->3306/tcp, [::]:3306->3306/tcp                                                                          
+PS H:\Mi unidad\escuela comercio\2026\materias\Bases de datos II\oferta_establecimientos_gastronomicos\repositorio\Trabajo-Final>
+expicación.
+ps mostró los servicios del proyecto y su estado.
+
+Lo que quisimos comprobar fue que aparezca:
+
+mariadb_establecimientos_gastronomicos
+
+Todo estaba funcionando bien así que seguimos.
+
+26.
+
+Comprobar que seguíamos usando la base anterior.
+
+Aunque el contenedor arrancó, , queríamos estar seguros de que todo estaba bien.
+
+Nosotros habíamos puesto:
+
+external: true
+
+justamente porque queríamos que Compose vuelva a utilizar el volumen:
+
+mariadb_establecimientos_data
+
+donde ya estaba nuestra base de datos.
+
+Por eso no alcanzaba con comprobar que el contenedor estuviera funcionando.
+
+También teníamos que comprobar que los datos anteriores siguieran ahí.
+
+Entramos a MariaDB con:
+
+docker compose exec mariadb mariadb -uroot -p
+explicación.
+docker compose exec permitió ejecutar un comando dentro de un servicio que ya estaba funcionando.
+
+mariadb después de exec fue el nombre del servicio que habíamos definido dentro de compose.yaml.
+
+El segundo mariadb fue el programa que abrió la consola de MariaDB.
+
+-uroot indicó que queríamos entrar con el usuario root.
+
+-p hizo que MariaDB nos pidiera la contraseña sin escribirla directamente dentro del comando.
+resultado:
+Enter password:                                                                                                         
+
+obviamente docker nos pidió la conraseña así que la pusimos y entramos.
+rootpass
+resultado:
+Welcome to the MariaDB monitor.  Commands end with ; or \g.                                                             
+Your MariaDB connection id is 3                                                                                         
+Server version: 12.3.3-MariaDB-ubu2404 mariadb.org binary distribution                                                  
+en blanco
+Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.                                                    
+en blanco
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.                                          
+MariaDB [(none)]>                                                                                                       
+
+Después usamos:
+
+USE oferta_gastronomica;
+
+Resultado:
+Reading table information for completion of table and column names                                                      
+You can turn off this feature to get a quicker startup with -A                                                          
+en blanco
+Database changed                                                                                                        
+MariaDB [oferta_gastronomica]>                                                                                          
+Después para comprobar que los registros  sigan ahí hicimos:
+
+SELECT COUNT(*)
+FROM temporal;
+
+Resultado:
++----------+                                                                                                            
+| count(*) |                                                                                                            
++----------+                                                                                                            
+|     2823 |                                                                                                            
++----------+                                                                                                            
+1 row in set (0.002 sec)                                                                                                
+MariaDB [oferta_gastronomica]>                                                                                          
+Ovbiamente lo que esperábamos volver a encontrar era:
+
+2823
+
+porque esa era la cantidad de registros que ya habíamos comprobado antes.
+Como estaba todo bien seguimosasí que salimos:
+
+EXIT;
+
+Después volvimos a comprobar qué volumen estaba conectado al contenedor:
+
+docker inspect mariadb_establecimientos_gastronomicos --format "{{range .Mounts}}{{.Type}} {{.Name}} -> {{.Destination}}{{end}}"
+
+Resultado:
+volume mariadb_establecimientos_data -> /var/lib/mysql                                                                  
+PS H:\Mi unidad\escuela comercio\2026\materias\Bases de datos II\oferta_establecimientos_gastronomicos\repositorio\Trabajo-Final>                                                                                                               
+explicación.
+docker inspect mostró la información interna del contenedor.
+
+--format nos permitió elegir solamente la parte de esa información que queríamos mostrar.
+
+{{range .Mounts}} recorrió los puntos de montaje del contenedor.
+
+{{.Type}} mostró si era un volumen u otro tipo de montaje.
+
+{{.Name}} mostró el nombre del volumen.
+
+{{.Destination}} mostró en qué lugar del contenedor estaba conectado.
+
+Lo que esperábamos volver a encontrar era:
+
+volume mariadb_establecimientos_data -> /var/lib/mysql
+
+Con esas dos comprobaciones podíamos saber que el contenedor creado con Compose estaba leyendo el mismo volumen que habíamos usado antes.
+Como todo estaba así seguimos.
+27.
+
+Guardar la configuración de Docker Compose en GitHub.
+
+Después de comprobar que Compose funcionaba bien y que la base seguía estando ahí, guardamos lo que pudimos hacer hasta ahí en el repositorio.
+Para eso hicimos:
+
+git status
+
+Resultado:
+On branch main                                                                                                          
+Your branch is up to date with 'origin/main'.                                                                           
+Changes not staged for commit:                                                                                          
+  (use "git add <file>..." to update what will be committed)                                                            
+  (use "git restore <file>..." to discard changes in working directory)                                                 
+        modified:   compose.yaml                                                                                        
+Untracked files:                                                                                                        
+  (use "git add <file>..." to include in what will be committed)                                                        
+        .env.example                                                                                                    
+        .gitignore                                                                                                      
+no changes added to commit (use "git add" and/or "git commit -a")                                                       
+PS H:\Mi unidad\escuela comercio\2026\materias\Bases de datos II\oferta_establecimientos_gastronomicos\repositorio\Trabajo-Final>
+explicacion
+git status mostró qué archivos habían cambiado y cuáles todavía no estaban preparados para un commit.
+
+Después agregamos:
+
+git add compose.yaml .gitignore .env.example proceso.md
+
+git add preparó esos archivos para el próximo commit.
+
+No agregamos .env porque justamente queríamos que ese archivo quedara solamente en nuestra computadora.
+
+Volvimos a comprobar:
+
+git status
+
+Resultado:
+On branch main                                                                                                          
+Your branch is up to date with 'origin/main'.                                                                           
+Changes to be committed:                                                                                                
+  (use "git restore --staged <file>..." to unstage)                                                                     
+        new file:   .env.example                                                                                        
+        new file:   .gitignore                                                                                          
+        modified:   compose.yaml                                                                                        
+        modified:   proceso.md                                                                                        
+
+PS H:\Mi unidad\escuela comercio\2026\materias\Bases de datos II\oferta_establecimientos_gastronomicos\repositorio\Trabajo-Final>
