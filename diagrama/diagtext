@@ -1,0 +1,54 @@
+////poner diagrama en imagen too
+Local (M) --- (1) Categoria
+Local (M) --- (1) Cocina
+Local (M) --- (1) ambientacion
+Local (M) --- (1) ubicacion
+Local (M) --- (1) direccion
+    Local {
+        id id
+        string nombre
+        foreign_key categoria
+        foreign_key cocina
+        foreign_key ambientacion
+        string direccion_completa
+        float longitud
+        float latitud
+        string telefono
+        string mail
+        string horario
+        string cp
+        string cp_arg
+        foreign_key ubicacion
+        foreign_key direccion
+    }
+
+    Categoria {
+        id id
+        string nombre
+    }
+
+    Cocina {
+        id id
+        string tipo_cocina
+    }
+
+    ambientacion {
+        id id
+        string tipo_amb
+    }
+
+    ubicacion {
+        id id
+        string nombre
+    }
+
+    direccion {
+        id id
+        string nombre
+    }
+    
+    Local }|--|| Categoria : "categoria (foreign key)"
+    Local }|--|| Cocina : "cocina (foreign key)"
+    Local }|--|| ambientacion : "ambientacion (foreign key)"
+    Local }|--|| ubicacion : "ubicacion (foreign key)"
+    Local }|--|| direccion : "direccion (foreign key)"
