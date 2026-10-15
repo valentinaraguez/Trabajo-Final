@@ -1,5 +1,5 @@
 Introducción.
-Para este trabajo final de Bases de Datos II, los profesores decidieron hacerlo en grupo. Este quedó conformado por Martín Ortiz y Valentín Aragues.
+Para este trabajo final de Bases de Datos II, los profesores decidieron hacerlo en grupo. Este quedó conformado por Martín Ortiz y Valentín Aragüez.
 Una vez que nos pusimos de acuerdo de cómo avanzar, empezamos así.
 1. 
 Elegir el CSV con el que quisimos trabajar.
