@@ -37,15 +37,21 @@ SELECT COUNT(*) AS ambientaciones_vacias
 FROM temporal
 WHERE ambientacion = '';
 
-SELECT DISTINCT barrio, comuna
+SELECT
+barrio,
+COUNT(DISTINCT comuna) AS cantidad_de_comunas
 FROM temporal
 WHERE barrio <> ''
-ORDER BY barrio;
+GROUP BY barrio
+ORDER BY cantidad_de_comunas DESC;
 
-SELECT DISTINCT codigo_postal_argentino, codigo_postal
+SELECT
+codigo_postal_argentino,
+COUNT(DISTINCT codigo_postal) AS cantidad_de_codigos_postales
 FROM temporal
 WHERE codigo_postal_argentino <> ''
-ORDER BY codigo_postal_argentino;
+GROUP BY codigo_postal_argentino
+ORDER BY cantidad_de_codigos_postales DESC;
 
 SELECT COUNT(*) AS registros_con_horario
 FROM temporal
