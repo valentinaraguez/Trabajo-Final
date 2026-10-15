@@ -1,54 +1,69 @@
 ////poner diagrama en imagen too
-Local (M) --- (1) Categoria
-Local (M) --- (1) Cocina
-Local (M) --- (1) ambientacion
-Local (M) --- (1) ubicacion
-Local (M) --- (1) direccion
-    Local {
-        id id
-        string nombre
-        foreign_key categoria
-        foreign_key cocina
-        foreign_key ambientacion
-        string direccion_completa
-        float longitud
-        float latitud
-        string telefono
-        string mail
-        string horario
-        string cp
-        string cp_arg
-        foreign_key ubicacion
-        foreign_key direccion
+
+    COMUNA {
+        int id_comuna PK
     }
 
-    Categoria {
-        id id
-        string nombre
+    BARRIO {
+        int id_barrio PK
+        varchar nombre UK
+        int id_comuna FK
     }
 
-    Cocina {
-        id id
-        string tipo_cocina
+    CODIGO_POSTAL {
+        int id_codigo_postal PK
+        char codigo_postal
+        varchar codigo_postal_argentino UK
     }
 
-    ambientacion {
-        id id
-        string tipo_amb
+    UBICACION {
+        int id_ubicacion PK
+        varchar calle_nombre
+        int calle_altura
+        varchar calle_cruce
+        int id_barrio FK
+        int id_codigo_postal FK
+        decimal longitud
+        decimal latitud
     }
 
-    ubicacion {
-        id id
-        string nombre
+    CATEGORIA {
+        int id_categoria PK
+        varchar nombre UK
     }
 
-    direccion {
-        id id
-        string nombre
+    COCINA {
+        int id_cocina PK
+        varchar tipo_cocina UK
     }
-    
-    Local }|--|| Categoria : "categoria (foreign key)"
-    Local }|--|| Cocina : "cocina (foreign key)"
-    Local }|--|| ambientacion : "ambientacion (foreign key)"
-    Local }|--|| ubicacion : "ubicacion (foreign key)"
-    Local }|--|| direccion : "direccion (foreign key)"
+
+    AMBIENTACION {
+        int id_ambientacion PK
+        varchar tipo_ambientacion UK
+    }
+
+    LOCAL {
+        int id_local PK
+        varchar nombre
+        text horario
+        int id_categoria FK
+        int id_cocina FK
+        int id_ambientacion FK
+        int id_ubicacion FK,UK
+    }
+
+    DATOS_CONTACTO {
+        int id_contacto PK
+        int id_local FK
+        varchar tipo_contacto
+        varchar valor
+    }
+ CARDS
+    comuna ---{ barrio : contiene
+    barrio }---- ubicacion : pertenece
+    codigo_postal ----{ ubicacion : corresponde
+    categoria ----{ local : clasifica
+    cocina ----{ local : tiene
+    ambientacion ----{ local : tiene
+    ubicacion ---- local : corresponde
+    local ----{ datos_contacto : tiene
