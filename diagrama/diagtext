@@ -1,13 +1,10 @@
-////poner diagrama en imagen too
+////correcciones
 
-    COMUNA {
-        int id_comuna PK
-    }
 
     BARRIO {
         int id_barrio PK
         varchar nombre UK
-        int id_comuna FK
+        int comuna 
     }
 
     CODIGO_POSTAL {
