@@ -1,0 +1,144 @@
+
+IIIIIIIIIIIIIIIIIIIIIIINSSSSSSSSSSSSSSSEEEEEEEEEEERTTTTTTTTTTTTTS
+
+INSERT IGNORE INTO categoria(nombre)
+select categoria from oferta_gastronomica;
+
+INSERT IGNORE INTO cocina (tipo_cocina) 
+SELECT (cocina) FROM oferta_gastronomica;
+
+INSERT IGNORE INTO ambientacion (tipo_ambientacion)
+SELECT ambientacion FROM oferta_gastronomica;
+///controlar errores 
+INSERT IGNORE INTO barrio (nombre)
+SELECT barrio FROM oferta_gastronomica;
+INSERT IGNORE INTO barrio (comuna)
+SELECT barrio FROM ofertagastronomica;
+
+INSERT IGNORE INTO codigo_postal (ccodigo_postal)
+SELECT codigo_postal FROM oferta_gastronomica;
+
+INSERT INTO ubicacion (calle_nombre, calle_altura, calle_cruce, id_barrio, id_codigo_postal, longitud, latitud)
+SELECT DISTINCT o.calle_nombre, o.calle_altura, o.calle_cruce, b.id_barrio, c.id_codigo_postal, o.`long`, o.lat
+FROM oferta_gastronomica o
+JOIN barrio b ON b.id_barrio = o.barrio 
+JOIN codigo_postal c ON c.ccodigo_postal = o.codigo_postal;
+
+
+INSERT DATOS CONTACT
+INSERT INTO datos_contacto (id_local, tipo_contacto, valor) SELECT 
+l.id_local, 
+'telefono' AS tipo_contacto, 
+o.telefono AS valor
+FROM ofertagastronomica o
+JOIN locall l ON l.nombre = o.nombre
+WHERE o.telefono IS NOT NULL AND o.telefono != '';
+
+
+INSERT INTO datos_contacto (id_local, tipo_contacto, valor)
+SELECT 
+    l.id_local, 
+    'mail' AS tipo_contacto, 
+    o.mail AS valor
+FROM ofertagastronomica o
+JOIN locall l ON l.nombre = o.nombre
+WHERE o.mail IS NOT NULL AND o.mail != '';
+
+INSERT INTO locall (nombre, horario, id_categoria, id_cocina, id_ambientacion, id_ubicacion)
+SELECT 
+    o.nombre, 
+    o.horario, 
+    c.id_categoria, 
+    co.id_cocina, 
+    a.id_ambientacion, 
+    u.id_ubicacion
+FROM ofertagastronomica o
+LEFT JOIN categoria c ON c.nombre = o.categoria
+LEFT JOIN cocina co ON co.tipo_cocina = o.cocina
+LEFT JOIN ambientacion a ON a.tipo_ambientacion = o.ambientacion
+JOIN barrio b ON b.nombre = o.barrio
+JOIN codigo_postal cp ON cp.codigo_postal_argentino = o.codigo_postal_argentino -- O el campo de código postal que uses en tu tabla
+JOIN ubicacion u ON u.calle_nombre = o.calle_nombre  AND u.calle_altura = o.calle_altura 
+AND u.id_barrio = b.id_barrio;
+
+UPPPPPDATES
+
+UPDATE ofertagastronomica
+JOIN categoria c ON c.id_categoria = ofertagastronomica.categoria
+SET ofertagastronomica.categoria = c.nombre
+WHERE ofertagastronomica.categoria IS NOT NULL;
+
+UPDATE ofertagastronomica
+JOIN cocina c ON c.id_cocina = ofertagastronomica.cocina
+SET ofertagastronomica.cocina = c.tipo_cocina
+WHERE ofertagastronomica.cocina IS NOT NULL;
+
+UPDATE ofertagastronomica
+JOIN ambientacion c ON c.id_ambientacion = ofertagastronomica.ambientacion
+SET ofertagastronomica.ambientacion = c.tipo_ambientacion
+WHERE ofertagastronomica.ambientacion IS NOT NULL;
+
+UPDATE ofertagastronomica
+JOIN barrio c ON c.id_barrio = ofertagastronomica.barrio
+SET ofertagastronomica.barrio = c.nombre
+WHERE ofertagastronomica.barrio IS NOT NULL;
+
+
+ALTER TABLEEEEEESSSSS
+
+
+
+ALTER TABLE codigo_postal
+MODIFY COLUMN codigo_postal_argentino CHAR(8);
+
+
+ALTER TABLE ubicacion 
+MODIFY COLUMN calle_altura INT UNSIGNED;
+
+ALTER TABLE ubicacion 
+MODIFY COLUMN longitud DECIMAL(10,8);
+
+ALTER TABLE ubicacion                
+MODIFY COLUMN latitud DECIMAL (10,8);
+
+ALTER TABLE LOCAL
+MODIFY COLUMN nombre VARCHAR(100);
+
+
+ALTER TABLE datos_contacto
+MODIFY COLUMN tipo_contacto VARCHAR(50);
+
+
+ALTER TABLE datos_contacto       
+MODIFY COLUMN valor VARCHAR(150);
+
+
+
+VISTAS //son4 BUSCAR PDF SILVIO
+
+CREATE VIEW vista_locales_completo AS
+SELECT locall.nombre, horario, categoria.nombre AS categoria, cocina.tipo_cocina
+FROM locall
+INNER JOIN categoria ON locall.id_categoria = categoria.id_categoria
+INNER JOIN cocina ON locall.id_cocina = cocina.id_cocina;
+
+CREATE VIEW vista_locales_ambientacion AS
+SELECT locall.nombre, horario, ambientacion.tipo_ambientacion
+FROM locall
+INNER JOIN ambientacion ON locall.id_ambientacion = ambientacion.id_ambientacion;
+
+
+CREATE VIEW vista_ubicacion_locales AS
+SELECT locall.nombre, calle_nombre, calle_altura, barrio.nombre AS barrio
+FROM locall
+INNER JOIN ubicacion ON locall.id_ubicacion = ubicacion.id_ubicacion
+INNER JOIN barrio ON ubicacion.id_barrio = barrio.id_barrio;
+
+CREATE VIEW vista_contacto_locales AS
+SELECT locall.nombre, tipo_contacto, valor
+FROM locall
+INNER JOIN datos_contacto ON locall.id_local = datos_contacto.id_local;
+
+//cp char 4 y cp arg char 8 ((cambiar en diagrama)
+ 	///use de referencia el modelo de vistas del pdf del Profesor Silvio Moschen
+
