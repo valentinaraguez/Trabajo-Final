@@ -34,7 +34,6 @@ Luego se continuó con los updates, que aproveché a sumar datos de los cuales m
 Fuimos con mi compañero haciéndonos muchas preguntas respecto al estado de cada uno, por mi parte lo mas complicado es no olvidarse de un dato
 determinado en alguna tabla , porque de hacerlo depende el contexto, hay que dropear tabla.
 
-Adjunto parte de mi codigo, no completo, como ejemplo de muestra. Todo basado en el diagrama y de la mano de csv.
 Al momento de crear las tablas tuvimos que tener en cuenta no perdernos ningun dato de utilidad que querramos. Ocurrió que con la segunda versión del 
 diagrama hecho, me percaté de que la idea armada en conjunto tenia unos errores como mismos nombres tanto en tabla-> atributo, lo que en heidi deriva a una
 confusion o superposicion de la tabla ante el atributo. Entonces se fue puliendo eso del diagrama a medida que a su vez averiguabamos cuestiones como
@@ -135,84 +134,6 @@ REFERENCES LOCAL(id_local)
 ON UPDATE CASCADE
 ON DELETE CASCADE
 );
-
-IIIIIIIIIIIIIIIIIIIIIIINSSSSSSSSSSSSSSSEEEEEEEEEEERTTTTTTTTTTTTTS
-
-INSERT IGNORE INTO categoria(nombre)
-select categoria from oferta_gastronomica;
-
-INSERT IGNORE INTO cocina (tipo_cocina) 
-SELECT (cocina) FROM oferta_gastronomica;
-
-INSERT IGNORE INTO ambientacion (tipo_ambientacion)
-SELECT ambientacion FROM oferta_gastronomica;
-
-INSERT IGNORE INTO barrio (nombre)
-SELECT barrio FROM oferta_gastronomica;
-INSERT IGNORE INTO barrio (comuna)
-SELECT barrio FROM ofertagastronomica;
-
-INSERT IGNORE INTO codigo_postal (ccodigo_postal)
-SELECT codigo_postal FROM oferta_gastronomica;
-
-INSERT INTO ubicacion (calle_nombre, calle_altura, calle_cruce, id_barrio, id_codigo_postal, longitud, latitud)
-SELECT DISTINCT o.calle_nombre, o.calle_altura, o.calle_cruce, b.id_barrio, c.id_codigo_postal, o.`long`, o.lat
-FROM oferta_gastronomica o
-JOIN barrio b ON b.id_barrio = o.barrio 
-JOIN codigo_postal c ON c.ccodigo_postal = o.codigo_postal;
-
-
-
-
-UPPPPPDATES
-
-UPDATE ofertagastronomica
-JOIN categoria c ON c.id_categoria = ofertagastronomica.categoria
-SET ofertagastronomica.categoria = c.nombre
-WHERE ofertagastronomica.categoria IS NOT NULL;
-
-UPDATE ofertagastronomica
-JOIN cocina c ON c.id_cocina = ofertagastronomica.cocina
-SET ofertagastronomica.cocina = c.tipo_cocina
-WHERE ofertagastronomica.cocina IS NOT NULL;
-
-UPDATE ofertagastronomica
-JOIN ambientacion c ON c.id_ambientacion = ofertagastronomica.ambientacion
-SET ofertagastronomica.ambientacion = c.tipo_ambientacion
-WHERE ofertagastronomica.ambientacion IS NOT NULL;
-
-UPDATE ofertagastronomica
-JOIN barrio c ON c.id_barrio = ofertagastronomica.barrio
-SET ofertagastronomica.barrio = c.nombre
-WHERE ofertagastronomica.barrio IS NOT NULL;
-
-
-ALTER TABLEEEEEESSSSS
-
-
-
-ALTER TABLE codigo_postal
-MODIFY COLUMN codigo_postal_argentino CHAR(8);
-
-
-ALTER TABLE ubicacion 
-MODIFY COLUMN calle_altura INT UNSIGNED;
-
-ALTER TABLE ubicacion 
-MODIFY COLUMN longitud DECIMAL(10,8);
-
-ALTER TABLE ubicacion                
-MODIFY COLUMN latitud DECIMAL (10,8);
-
-ALTER TABLE LOCAL
-MODIFY COLUMN nombre VARCHAR(100);
-
-
-ALTER TABLE datos_contacto
-MODIFY COLUMN tipo_contacto VARCHAR(50);
-
-
-ALTER TABLE datos_contacto       
-MODIFY COLUMN valor VARCHAR(150);
+//////////////////////////Detallé mas a fondo en los apartados de HeidiSQL y Inserts y vistas que son los apartados acorde a esta sección.
 
 
