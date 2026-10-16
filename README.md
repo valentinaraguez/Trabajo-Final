@@ -256,7 +256,23 @@
 
 #
 
-# Hicimos varios cambios basados en el diagrama basado a problemas y explicaciones de los profesores.
+# Hicimos varios cambios en el diagrama basado a problemas y explicaciones de los profesores.
+
+Para Heidi una vez iniciado el programa junto a XAMPP con sql encendido,  se da click arriba en herramientas , y se selecciona importar un csv tal como 
+lo muestra la imagen.
+<img width="612" height="427" alt="image" src="https://github.com/user-attachments/assets/fd5cd753-2e1f-4707-989e-e94f8275e07d" />
+
+luego en esta parte se selecciona el metodo de improtacion , del cual a mi me ha servido las opciones que se ven en la siguiente imagen, siempre UTF-8 que se adapta mejor a caracteres especiales.
+<img width="997" height="697" alt="image" src="https://github.com/user-attachments/assets/4de12669-9c6d-42aa-91c0-0975cdde3dd8" />
+
+Una vez creada la tabla (se puede crear una para la misma base antes, o en ese menu crear una tabla nueva y darle nombre, que ese sera nuestro "todo".
+Se chequea que los datos coincidan con los del csv, que no haya aglomeramiento de datos ni errores, y se prosigue con la creacion de tablas, tal como encontraran aqui mismo en github en el apartado sql>HEIDISQL y luego >inserts, updates, vistas.
+<img width="1590" height="685" alt="image" src="https://github.com/user-attachments/assets/e930428d-d52a-4f51-8688-43097fc51c9d" />
+
+Asi quedará una vez hecho.
+<img width="257" height="377" alt="image" src="https://github.com/user-attachments/assets/ea458d45-a22c-4aaf-8519-c5d7662cb522" />
+
+
 
 
 
