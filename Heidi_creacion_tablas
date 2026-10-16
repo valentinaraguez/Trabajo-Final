@@ -1,0 +1,96 @@
+creación de las tablas elegidas y destinadas a usar.
+
+CREATE TABLE categoria(
+	id_categoria INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+	nombre VARCHAR(50) UNIQUE );
+
+CREATE TABLE cocina(
+	id_cocina INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+	tipo_cocina VARCHAR(80) UNIQUE );
+
+CREATE TABLE ambientacion(
+	id_ambientacion INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+	tipo_ambientacion VARCHAR(150) UNIQUE );
+
+//cepille comuna como tb aparte, es inútil tener una tabla con un único dato.
+
+CREATE TABLE barrio(
+	id_barrio INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+	nombre VARCHAR(100) UNIQUE,
+	comuna INT UNSIGNED UNIQUE);
+
+CREATE TABLE codigo_postal(
+	id_codigo_postal INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+	codigo_postal char(4),
+	codigo_postal_argentino CHAR(8) UNIQUE);
+
+ME CUESTAN LAS FOREIGN
+
+CREATE TABLE ubicacion (
+id_ubicacion INT unsigned AUTO_INCREMENT PRIMARY KEY,
+calle_nombre VARCHAR(100),
+calle_altura INT UNSIGNED,
+calle_cruce VARCHAR(100),
+id_barrio INT UNSIGNED,
+id_codigo_postal INT UNSIGNED,
+longitud DECIMAL (10,8),
+latitud DECIMAL (10,8),
+
+CONSTRAINT fk_ubicacion_barrio
+FOREIGN KEY (id_barrio)
+REFERENCES barrio(id_barrio)
+ON UPDATE CASCADE
+ON DELETE RESTRICT,
+CONSTRAINT fk_ubicacion_codigo_postal
+foreign key (id_codigo_postal)
+references codigo_postal(id_codigo_postal)
+ON UPDATE CASCADE
+ON DELETE RESTRICT       ///FUNCIONA
+);
+
+CREATE TABLE locall (
+id_local INT unsigned AUTO_INCREMENT PRIMARY KEY,
+nombre VARCHAR(100)NOT NULL,
+horario TEXT,
+id_categoria INT UNSIGNED,
+id_cocina INT UNSIGNED,
+id_ambientacion INT UNSIGNED,
+id_ubicacion INT UNSIGNED UNIQUE,
+
+CONSTRAINT fk_local_categoria
+FOREIGN KEY (id_categoria)
+REFERENCES categoria(id_categoria)
+ON UPDATE CASCADE
+ON DELETE RESTRICT,
+
+CONSTRAINT fk_local_cocina
+FOREIGN KEY (id_cocina)
+REFERENCES cocina(id_cocina)
+ON UPDATE CASCADE
+ON DELETE RESTRICT,
+
+CONSTRAINT fk_local_ambientacion
+FOREIGN KEY (id_ambientacion)
+REFERENCES ambientacion(id_ambientacion)
+ON UPDATE CASCADE
+ON DELETE RESTRICT,
+
+CONSTRAINT fk_local_ubicacion
+FOREIGN KEY (id_ubicacion)
+REFERENCES ubicacion(id_ubicacion)
+ON UPDATE CASCADE
+ON DELETE RESTRICT
+);
+
+CREATE TABLE datos_contacto (
+id_contacto INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+id_local INT UNSIGNED NOT NULL,
+tipo_contacto VARCHAR(50),
+valor VARCHAR(150),
+
+CONSTRAINT fk_datos_contacto_local
+FOREIGN KEY (id_local)
+REFERENCES LOCAL(id_local)
+ON UPDATE CASCADE
+ON DELETE CASCADE
+);
