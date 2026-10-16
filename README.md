@@ -236,6 +236,8 @@
 
 # En `proceso.md` está explicado paso por paso cómo crear la base, cómo importar el CSV y cómo ejecutar las consultas.
 
+# En el caso de HeidiSQL, con uso de XAMPP es similar. Explicado en procesoHX
+
 # 
 
 # De esa forma, cualquier persona puede preparar MariaDB y después seguir los pasos de `proceso.md` para trabajar con los mismos datos que nosotros.
@@ -251,6 +253,10 @@
 # 
 
 # <img width="1480" height="1004" alt="diagrama full" src="https://github.com/user-attachments/assets/5c4eed6e-04c9-4551-8cde-9629e1f249f0" />
+
+#
+
+# Hicimos varios cambios basados en el diagrama basado a problemas y explicaciones de los profesores.
 
 
 
